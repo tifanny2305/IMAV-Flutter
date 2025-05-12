@@ -5,8 +5,29 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Home Screen'))
+    return Scaffold(
+      appBar: AppBar(title: const Text('Panel del Mecánico')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.mic),
+              label: const Text("Iniciar grabación"),
+              onPressed: () {
+                Navigator.pushNamed(context, '/grabacion');
+              },
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.history),
+              label: const Text("Historial"),
+              onPressed: () {
+                Navigator.pushNamed(context, '/historial');
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
