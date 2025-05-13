@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:taller_1/providers/usuario_provider.dart';
+import 'package:taller_1/screens/grabaciones.dart';
 import 'package:taller_1/screens/home.dart';
 import 'package:taller_1/screens/login.dart';
 
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
         routes: {
           'login': (_) => const Login(),
           'home': (_) => const Home(),
+          'grabaciones': (_) => const Grabaciones()
         },
         initialRoute: 'login',
       ),
