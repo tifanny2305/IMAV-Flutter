@@ -15,14 +15,14 @@ class Home extends StatelessWidget {
               icon: const Icon(Icons.mic),
               label: const Text("Iniciar grabación"),
               onPressed: () {
-                Navigator.pushNamed(context, '/grabacion');
+                Navigator.pushNamed(context, 'audios');
               },
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.history),
               label: const Text("Historial"),
               onPressed: () {
-                Navigator.pushNamed(context, '/historial');
+                Navigator.pushNamed(context, 'historial');
               },
             ),
           ],
