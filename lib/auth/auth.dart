@@ -8,7 +8,8 @@ class UsuarioProvider with ChangeNotifier {
   bool _isAuthenticated = false;
 
   // URL base de tu API NestJS (ajusta a tu IP o dominio)
-  final String _baseUrl = 'http://10.0.2.2:3000/api/auth';
+  //final String _baseUrl = 'http://10.0.2.2:3000/api/auth';
+  final String _baseUrl = 'http://192.168.1.8:3000/api/auth';
 
   // Getters
   String? get correo => _correo;

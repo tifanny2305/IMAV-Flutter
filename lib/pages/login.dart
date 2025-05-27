@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:taller_1/auth/providers/usuarios_provider.dart';
+import 'package:taller_1/auth/auth.dart';
 import 'package:taller_1/widgets/input_decoration.dart';
 
 class Login extends StatefulWidget {
