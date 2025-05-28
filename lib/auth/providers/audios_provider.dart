@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class AudioProvider with ChangeNotifier {
@@ -40,7 +42,7 @@ class AudioProvider with ChangeNotifier {
     }
   }
 
-  /// 1️⃣ Iniciar desde cero
+  ///Iniciar desde cero
   Future<void> startListening() async {
     if (!_speechReady) await _initSpeech();
     if (!_speechReady) return;
@@ -51,7 +53,7 @@ class AudioProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 2️⃣ Continuar acumulando (tras silencio)
+  ///Continuar acumulando (tras silencio)
   Future<void> continueListening() async {
     if (!_speechReady || _isListening) return;
 
@@ -60,18 +62,13 @@ class AudioProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 3️⃣ Detener y volcar resultado final
+  ///Detener y volcar resultado final
   Future<void> stopListening() async {
     if (_isListening) {
       await _speech.stop();
       _isListening = false;
+      notifyListeners();
     }
-    // imprime el buffer completo
-    debugPrint('📋 Transcripción final: $_buffer');
-
-    // resetea para la siguiente sesión
-    _buffer = '';
-    notifyListeners();
   }
 
   void _startSession() {
@@ -80,7 +77,6 @@ class AudioProvider with ChangeNotifier {
         if (result.finalResult) {
           final words = result.recognizedWords.trim();
           if (words.isNotEmpty) {
-            // acumulamos en el buffer
             _buffer = _buffer.isEmpty ? words : '$_buffer $words';
           }
           if (result.hasConfidenceRating && result.confidence > 0) {
@@ -95,6 +91,26 @@ class AudioProvider with ChangeNotifier {
         cancelOnError: false,
       ),
     );
+  }
+
+  Future<void> sendTranscription() async {
+    final uri = Uri.parse('http://192.168.1.8:3000/api/audios');
+    final body = jsonEncode({'transcripcion': _buffer});
+
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      debugPrint('✅ Transcripción enviada correctamente');
+      // sólo aquí borramos el buffer
+      _buffer = '';
+      notifyListeners();
+    } else {
+      throw Exception('Error al enviar transcripción: ${res.statusCode}');
+    }
   }
 
   @override

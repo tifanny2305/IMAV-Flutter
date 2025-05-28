@@ -50,7 +50,23 @@ class _AudiosState extends State<Audios> {
               ),
               ElevatedButton(
                 onPressed: audioProv.canStop
-                    ? () => audioProv.stopListening()
+                    ? () async {
+                        // 1) Detiene la escucha y consolida el buffer
+                        await audioProv.stopListening();
+
+                        // 2) Envía la transcripción al backend
+                        try {
+                          await audioProv.sendTranscription();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('🟢 Transcripción guardada')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('❌ Error: $e')),
+                          );
+                        }
+                      }
                     : null,
                 child: const Text('Detener'),
               ),
