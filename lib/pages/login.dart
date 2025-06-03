@@ -34,7 +34,7 @@ class _LoginState extends State<Login> {
   Widget login(BuildContext context) {
     final usuarioProvider = Provider.of<UsuarioProvider>(context);
     final diagProv = Provider.of<DiagnosticosProvider>(context, listen: false);
-    
+
     return Column(
       children: [
         const SizedBox(height: 280),
@@ -99,42 +99,30 @@ class _LoginState extends State<Login> {
                       onChanged: (value) => password = value,
                     ),
                     const SizedBox(height: 30),
-                    MaterialButton(
+                    SizedBox(
+                      width: double
+                          .infinity, // Ocupa todo el ancho disponible (según el margin del padre)
+                      child: MaterialButton(
+                        // Elimina el padding horizontal fijo de 80:
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        minWidth: double
+                            .infinity, // Asegura que el botón use el ancho completo
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         disabledColor: Colors.grey,
                         color: const Color.fromARGB(255, 20, 18, 110),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 80, vertical: 15),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Ingresar',
-                                  style: TextStyle(color: Colors.white)),
-                        ),
                         onPressed: _isLoading
                             ? null
                             : () async {
-                                // Validamos el formulario
                                 if (!formKey.currentState!.validate()) return;
 
                                 setState(() {
                                   _isLoading = true;
                                 });
 
-                                // Llamamos al provider para hacer login
                                 bool success = await usuarioProvider.login(
                                     email, password);
-                                print('email: $email');
-                                print('password: $password');
-
                                 setState(() {
                                   _isLoading = false;
                                 });
@@ -144,7 +132,6 @@ class _LoginState extends State<Login> {
                                   Navigator.pushReplacementNamed(
                                       context, 'diagnosticos');
                                 } else {
-                                  // Mostrar un mensaje de error si falla
                                   showDialog(
                                     context: context,
                                     builder: (_) => AlertDialog(
@@ -161,7 +148,22 @@ class _LoginState extends State<Login> {
                                     ),
                                   );
                                 }
-                              }),
+                              },
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Ingresar',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                      ),
+                    ),
                   ]),
                 ),
               )

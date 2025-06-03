@@ -6,7 +6,7 @@ import 'package:taller_1/auth/providers/audios_provider.dart';
 import 'package:taller_1/auth/providers/diagnosticos_provider.dart';
 import 'package:taller_1/pages/audios.dart';
 import 'package:taller_1/pages/diagnosticos.dart';
-import 'package:taller_1/pages/home.dart';
+//import 'package:taller_1/pages/home.dart';
 import 'package:taller_1/pages/login.dart';
 
 class MyApp extends StatelessWidget {
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         title: 'Material App',
         routes: {
           'login': (_) => const Login(),
-          'home': (_) => const Home(),
+          //'home': (_) => const Home(),
           'diagnosticos': (_) => Diagnosticos(),
           'audios': (_) => const Audios(),
         },
