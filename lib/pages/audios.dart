@@ -51,19 +51,24 @@ class _AudiosState extends State<Audios> {
               ElevatedButton(
                 onPressed: audioProv.canStop
                     ? () async {
-                        // 1) Detiene la escucha y consolida el buffer
-                        await audioProv.stopListening();
-
-                        // 2) Envía la transcripción al backend
                         try {
-                          await audioProv.sendTranscription();
+                          final idDiag = await audioProv.stopListening();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('🟢 Transcripción guardada')),
+                            SnackBar(
+                              content: Text(
+                                  'Texto enviado para diagnóstico #$idDiag'),
+                            ),
                           );
+
+                          // Redirigir a la vista de Diagnóstico
+                          Navigator.pushNamed(context, 'diagnosticos');
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('❌ Error: $e')),
+                            SnackBar(
+                              content:
+                                  Text('Error al detener: ${e.toString()}'),
+                              backgroundColor: Colors.redAccent,
+                            ),
                           );
                         }
                       }

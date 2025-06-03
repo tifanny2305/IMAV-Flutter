@@ -1,10 +1,7 @@
-import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:taller_1/auth/auth.dart';
+import 'package:taller_1/auth/providers/diagnosticos_provider.dart';
 import 'package:taller_1/widgets/input_decoration.dart';
 
 class Login extends StatefulWidget {
@@ -18,6 +15,7 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String email = '';
   String password = '';
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +33,7 @@ class _LoginState extends State<Login> {
 
   Widget login(BuildContext context) {
     final usuarioProvider = Provider.of<UsuarioProvider>(context);
+    final diagProv = Provider.of<DiagnosticosProvider>(context, listen: false);
     
     return Column(
       children: [
@@ -108,41 +107,61 @@ class _LoginState extends State<Login> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 80, vertical: 15),
-                          child: const Text('Ingresar',
-                              style: TextStyle(color: Colors.white)),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Ingresar',
+                                  style: TextStyle(color: Colors.white)),
                         ),
-                        onPressed: () async {
-                          // Validamos el formulario
-                          if (!formKey.currentState!.validate()) return;
-    
-                          // Llamamos al provider para hacer login
-                          bool success =
-                              await usuarioProvider.login(email, password);
-                              print('email: $email');
-                              print('password: $password');
-    
-                          if (success) {
-                            Navigator.pushReplacementNamed(context, 'home');
-                          } else {
-                            // Mostrar un mensaje de error si falla
-                            showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('Error'),
-                                content: const Text(
-                                    'No se pudo iniciar sesión. Verifica tus credenciales.'),
-                                actions: [
-                                  TextButton(
-                                    child: const Text('OK'),
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                  )
-                                ],
-                              ),
-                            );
-                          }
-                          
-                        }),
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                // Validamos el formulario
+                                if (!formKey.currentState!.validate()) return;
+
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                // Llamamos al provider para hacer login
+                                bool success = await usuarioProvider.login(
+                                    email, password);
+                                print('email: $email');
+                                print('password: $password');
+
+                                setState(() {
+                                  _isLoading = false;
+                                });
+
+                                if (success) {
+                                  await diagProv.cargarDiagnosticos();
+                                  Navigator.pushReplacementNamed(
+                                      context, 'diagnosticos');
+                                } else {
+                                  // Mostrar un mensaje de error si falla
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text('Error'),
+                                      content: const Text(
+                                          'No se pudo iniciar sesión. Verifica tus credenciales.'),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('OK'),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                }
+                              }),
                   ]),
                 ),
               )
