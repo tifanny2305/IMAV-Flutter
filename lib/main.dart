@@ -9,11 +9,15 @@ import 'package:taller_1/pages/diagnosticos.dart';
 import 'package:taller_1/pages/home.dart';
 import 'package:taller_1/pages/login.dart';
 
-void main() {
-  final socketService = SocketService(); // Singleton
+class MyApp extends StatelessWidget {
+  final SocketService socketService;
 
-  runApp(
-    MultiProvider(
+  // Hacemos un constructor que reciba el SocketService
+  const MyApp({Key? key, required this.socketService}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider(socketService)),
@@ -26,10 +30,17 @@ void main() {
           'login': (_) => const Login(),
           'home': (_) => const Home(),
           'diagnosticos': (_) => Diagnosticos(),
-          'audios': (_) => const Audios()
+          'audios': (_) => const Audios(),
         },
         initialRoute: 'login',
       ),
-    ),
+    );
+  }
+}
+
+void main() {
+  final socketService = SocketService();
+  runApp(
+    MyApp(socketService: socketService),
   );
 }
