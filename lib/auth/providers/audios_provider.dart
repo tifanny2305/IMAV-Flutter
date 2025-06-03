@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:porcupine_flutter/porcupine_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:taller_1/Services/socket_service.dart';
@@ -6,6 +8,10 @@ import 'package:taller_1/Services/socket_service.dart';
 class AudioProvider with ChangeNotifier {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final SocketService socketService;
+
+  PorcupineManager? _porcupineIniciar;
+  PorcupineManager? _porcupineContinuar;
+  PorcupineManager? _porcupineDetener;
 
   bool _speechReady = false;
   bool _isListening = false;
@@ -29,6 +35,117 @@ class AudioProvider with ChangeNotifier {
 
   AudioProvider(this.socketService) {
     _initSpeech();
+    _initPorcupineMultiples();
+  }
+
+  Future<void> _initPorcupineMultiples() async {
+    // Cada clave trabaja con su propio modelo .ppn
+    const String KEY_INICIAR = 'HKVb97cL0NGbQUHp6l1M0o7lHvsFDjBhh8YmUaedxZqkW2PcXfNFdQ==';
+    const String KEY_CONTINUAR = 'SXsVFq1/dJGvJnsXqg1l7Twgo8y5Vmif3dRRDmfu/m7k5fVjLR0rig==';
+    const String KEY_DETENER = 'Og1QbccO6erg/eMNcEB4kLMObukHofBSnT0ywwG5vyNGxyMPF8AUPQ==';
+
+    // Comprobamos primero que los assets existen:
+    bool existeParams = await rootBundle
+        .load('assets/porcupine_params_es.pv')
+        .then((_) => true)
+        .catchError((_) => false);
+    debugPrint('¿porcupine_params_es.pv existe? → $existeParams');
+
+    bool existeIniciar = await rootBundle
+        .load('assets/keywords/iniciar_es_android_v3_0_0.ppn')
+        .then((_) => true)
+        .catchError((_) => false);
+    debugPrint('¿iniciar_es_android_v3_0_0.ppn existe? → $existeIniciar');
+
+    bool existeContinuar = await rootBundle
+        .load('assets/keywords/continuar_es_android_v3_0_0.ppn')
+        .then((_) => true)
+        .catchError((_) => false);
+    debugPrint('¿continuar_es_android_v3_0_0.ppn existe? → $existeContinuar');
+
+    bool existeDetener = await rootBundle
+        .load('assets/keywords/finalizar_es_android_v3_0_0.ppn')
+        .then((_) => true)
+        .catchError((_) => false);
+    debugPrint('¿detener_es_android_v3_0_0.ppn existe? → $existeDetener');
+
+    if (!existeParams || !existeIniciar || !existeContinuar || !existeDetener) {
+      debugPrint(
+          '❌ Faltan assets de Porcupine. No inicializo instancias múltiples.');
+      return;
+    }
+
+    try {
+      // --- Instancia “Iniciar” ---
+      _porcupineIniciar = await PorcupineManager.fromKeywordPaths(
+        KEY_INICIAR,
+        ['assets/keywords/iniciar_es_android_v3_0_0.ppn'],
+        (int keywordIndex) {
+          // índice siempre 0 aquí (solo un modelo en esta instancia)
+          debugPrint('🔑 Porcupine(INICIAR) detectó “iniciar”');
+          _onIniciarDetected();
+        },
+        modelPath: 'assets/porcupine_params_es.pv',
+        sensitivities: [0.5],
+        errorCallback: (error) {
+          debugPrint('❌ Porcupine(INICIAR) error: $error');
+        },
+      );
+      await _porcupineIniciar?.start();
+      debugPrint('🔊 Porcupine(INICIAR) corriendo…');
+
+      // --- Instancia “Continuar” ---
+      _porcupineContinuar = await PorcupineManager.fromKeywordPaths(
+        KEY_CONTINUAR,
+        ['assets/keywords/continuar_es_android_v3_0_0.ppn'],
+        (int keywordIndex) {
+          debugPrint('🔑 Porcupine(CONTINUAR) detectó “continuar”');
+          _onContinuarDetected();
+        },
+        modelPath: 'assets/porcupine_params_es.pv',
+        sensitivities: [0.5],
+        errorCallback: (error) {
+          debugPrint('❌ Porcupine(CONTINUAR) error: $error');
+        },
+      );
+      await _porcupineContinuar?.start();
+      debugPrint('🔊 Porcupine(CONTINUAR) corriendo…');
+
+      // --- Instancia “Detener” ---
+      _porcupineDetener = await PorcupineManager.fromKeywordPaths(
+        KEY_DETENER,
+        ['assets/keywords/finalizar_es_android_v3_0_0.ppn'],
+        (int keywordIndex) {
+          debugPrint('🔑 Porcupine(DETENER) detectó “detener”');
+          _onDetenerDetected();
+        },
+        modelPath: 'assets/porcupine_params_es.pv',
+        sensitivities: [0.5],
+        errorCallback: (error) {
+          debugPrint('❌ Porcupine(DETENER) error: $error');
+        },
+      );
+      await _porcupineDetener?.start();
+      debugPrint('🔊 Porcupine(DETENER) corriendo…');
+    } catch (e) {
+      debugPrint('❌ Error inicializando instancias múltiples: $e');
+    }
+  }
+
+  // -----------------------------------------
+  // Métodos callback para cada hotword
+  void _onIniciarDetected() {
+    if (!_speechReady || _isListening) return;
+    startListening();
+  }
+
+  void _onContinuarDetected() {
+    if (!_speechReady || _isListening) return;
+    if (_buffer.isNotEmpty) continueListening();
+  }
+
+  void _onDetenerDetected() {
+    if (_isListening || _buffer.isNotEmpty) stopListening();
   }
 
   Future<void> _connectSocket() async {

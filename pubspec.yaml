@@ -71,6 +71,13 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+
+  assets:
+    - assets/porcupine_params_es.pv
+    - assets/keywords/iniciar_es_android_v3_0_0.ppn
+    - assets/keywords/continuar_es_android_v3_0_0.ppn
+    - assets/keywords/finalizar_es_android_v3_0_0.ppn
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
