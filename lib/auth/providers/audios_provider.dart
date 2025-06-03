@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:taller_1/Services/socket_service.dart';
 
+typedef OnDetenerCallback = Future<void> Function();
+
 class AudioProvider with ChangeNotifier {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final SocketService socketService;
@@ -36,6 +38,12 @@ class AudioProvider with ChangeNotifier {
   AudioProvider(this.socketService) {
     _initSpeech();
     _initPorcupineMultiples();
+  }
+
+  OnDetenerCallback? _onDetenerCallback;
+
+  void setOnDetenerCallback(OnDetenerCallback callback) {
+    _onDetenerCallback = callback;
   }
 
   Future<void> _initPorcupineMultiples() async {
@@ -145,7 +153,13 @@ class AudioProvider with ChangeNotifier {
   }
 
   void _onDetenerDetected() {
-    if (_isListening || _buffer.isNotEmpty) stopListening();
+    if (_isListening || _buffer.isNotEmpty) {
+      if (_onDetenerCallback != null) {
+        _onDetenerCallback!();
+      } else {
+        stopListening();
+      }
+    }
   }
 
   Future<void> _connectSocket() async {

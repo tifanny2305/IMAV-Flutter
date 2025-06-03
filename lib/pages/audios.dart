@@ -11,6 +11,33 @@ class Audios extends StatefulWidget {
 
 class _AudiosState extends State<Audios> {
   @override
+  void initState() {
+    super.initState();
+    // Registrar el callback para "detener"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final audioProv = context.read<AudioProvider>();
+      audioProv.setOnDetenerCallback(() async {
+        try {
+          final idDiag = await audioProv.stopListening();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Texto enviado para diagnóstico #$idDiag')),
+          );
+          Navigator.pushNamed(context, 'diagnosticos');
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al detener: ${e.toString()}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final audioProv = context.watch<AudioProvider>();
 
