@@ -50,7 +50,28 @@ class _AudiosState extends State<Audios> {
               ),
               ElevatedButton(
                 onPressed: audioProv.canStop
-                    ? () => audioProv.stopListening()
+                    ? () async {
+                        try {
+                          final idDiag = await audioProv.stopListening();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Texto enviado para diagnóstico #$idDiag'),
+                            ),
+                          );
+
+                          // Redirigir a la vista de Diagnóstico
+                          Navigator.pushNamed(context, 'diagnosticos');
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Error al detener: ${e.toString()}'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      }
                     : null,
                 child: const Text('Detener'),
               ),
