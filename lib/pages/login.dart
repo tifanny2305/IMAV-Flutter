@@ -170,11 +170,6 @@ class _LoginState extends State<Login> {
             ],
           ),
         ),
-        const SizedBox(height: 50),
-        const Text(
-          '¿No tienes cuenta?',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
       ],
     );
   }
