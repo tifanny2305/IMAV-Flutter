@@ -82,7 +82,8 @@ class _AudiosState extends State<Audios> {
               // ********************** Card de transcripción **********************
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Card(
                     elevation: 1,
                     shape: RoundedRectangleBorder(
@@ -97,7 +98,8 @@ class _AudiosState extends State<Audios> {
                           audioProv.speechText.isEmpty
                               ? 'Presiona “Iniciar” y habla…'
                               : audioProv.speechText,
-                          style: const TextStyle(fontSize: 20, color: Colors.black87),
+                          style: const TextStyle(
+                              fontSize: 20, color: Colors.black87),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -122,7 +124,7 @@ class _AudiosState extends State<Audios> {
           // ********************** Indicador “Grabando…” justo debajo del AppBar **********************
           if (audioProv.isListening)
             const Positioned(
-              top: 16,   // Un poco debajo del AppBar
+              top: 16, // Un poco debajo del AppBar
               right: 24, // mismo padding horizontal que el Card
               child: _GrabandoIndicator(),
             ),
@@ -151,208 +153,121 @@ class _AudiosState extends State<Audios> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // ------ BOTÓN “INICIAR” ------
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 4),
-                      child: ElevatedButton(
-                        onPressed: audioProv.canStart
-                            ? () => audioProv.startListening()
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              audioProv.canStart ? Colors.white : Colors.grey[200],
-                          elevation: audioProv.canStart ? 2 : 0,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: audioProv.canStart
-                                ? const BorderSide(
-                                    color: Color(0xFF14126E),
-                                    width: 1.5,
-                                  )
-                                : BorderSide(
-                                    color: Colors.grey[300]!,
-                                    width: 1.5,
-                                  ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.mic,
-                              size: 18,
-                              color: audioProv.canStart
-                                  ? const Color(0xFF14126E)
-                                  : Colors.grey[400],
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Iniciar',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: audioProv.canStart
-                                      ? const Color(0xFF14126E)
-                                      : Colors.grey[400],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _BotonAccion(
+                    icono: Icons.mic,
+                    texto: 'Iniciar',
+                    colorActivo: const Color(0xFF14126E),
+                    habilitado: audioProv.canStart,
+                    onPressed: audioProv.canStart
+                        ? () => audioProv.startListening()
+                        : null,
                   ),
-
-                  // ------ BOTÓN “CONTINUAR” COMO ÍCONO + TEXTO EN COLUMNA ------
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ElevatedButton(
-                        onPressed: audioProv.canContinue
-                            ? () => audioProv.continueListening()
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              audioProv.canContinue ? Colors.white : Colors.grey[200],
-                          elevation: audioProv.canContinue ? 2 : 0,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 4,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: audioProv.canContinue
-                                ? const BorderSide(
-                                    color: Color(0xFF7E57C2),
-                                    width: 1.5,
-                                  )
-                                : BorderSide(
-                                    color: Colors.grey[300]!,
-                                    width: 1.5,
-                                  ),
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.replay,
-                              size: 20,
-                              color: audioProv.canContinue
-                                  ? const Color(0xFF7E57C2)
-                                  : Colors.grey[400],
-                            ),
-                            const SizedBox(height: 4),
-                            Flexible(
-                              child: Text(
-                                'Continuar',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: audioProv.canContinue
-                                      ? const Color(0xFF7E57C2)
-                                      : Colors.grey[400],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _BotonAccion(
+                    icono: Icons.replay,
+                    texto: 'Continuar',
+                    colorActivo: const Color(0xFF7E57C2),
+                    habilitado: audioProv.canContinue,
+                    onPressed: audioProv.canContinue
+                        ? () => audioProv.continueListening()
+                        : null,
                   ),
-
-                  // ------ BOTÓN “DETENER” ------
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(left: 4),
-                      child: ElevatedButton(
-                        onPressed: audioProv.canStop
-                            ? () async {
-                                try {
-                                  final idDiag = await audioProv.stopListening();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Texto enviado para diagnóstico #$idDiag'),
-                                    ),
-                                  );
-                                  Navigator.pushNamed(context, 'diagnosticos');
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Error al detener: ${e.toString()}'),
-                                      backgroundColor: Colors.redAccent,
-                                    ),
-                                  );
-                                }
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              audioProv.canStop ? Colors.white : Colors.grey[200],
-                          elevation: audioProv.canStop ? 2 : 0,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: audioProv.canStop
-                                ? const BorderSide(
-                                    color: Color(0xFFC62828),
-                                    width: 1.5,
-                                  )
-                                : BorderSide(
-                                    color: Colors.grey[300]!,
-                                    width: 1.5,
-                                  ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.stop,
-                              size: 18,
-                              color: audioProv.canStop
-                                  ? const Color(0xFFC62828)
-                                  : Colors.grey[400],
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Detener',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: audioProv.canStop
-                                      ? const Color(0xFFC62828)
-                                      : Colors.grey[400],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                  _BotonAccion(
+                    icono: Icons.camera_alt,
+                    texto: 'Foto',
+                    colorActivo: const Color(0xFF009688),
+                    habilitado: audioProv.canTakePhoto,
+                    onPressed: audioProv.canTakePhoto
+                        ? () => audioProv.tomarFoto(context)
+                        : null,
+                  ),
+                  _BotonAccion(
+                    icono: Icons.stop,
+                    texto: 'Detener',
+                    colorActivo: const Color(0xFFC62828),
+                    habilitado: audioProv.canStop,
+                    onPressed: audioProv.canStop
+                        ? () async {
+                            try {
+                              final idDiag = await audioProv.stopListening();
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Texto enviado (#$idDiag)')),
+                              );
+                              Navigator.pushNamed(context, 'diagnosticos');
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al detener: $e'),
+                                  backgroundColor: Colors.redAccent,
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                              );
+                            }
+                          }
+                        : null,
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Botón reutilizable con diseño vertical
+class _BotonAccion extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final Color colorActivo;
+  final bool habilitado;
+  final VoidCallback? onPressed;
+
+  const _BotonAccion({
+    required this.icono,
+    required this.texto,
+    required this.colorActivo,
+    required this.habilitado,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = habilitado ? colorActivo : Colors.grey[400];
+    final fondo = Colors.white; // Siempre blanco para evitar salto visual
+    final borde = BorderSide(
+      color: habilitado ? colorActivo : Colors.grey[300]!,
+      width: 1.5,
+    );
+
+    return Flexible(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: fondo,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: borde,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icono, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              texto,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

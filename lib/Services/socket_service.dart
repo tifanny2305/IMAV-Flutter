@@ -226,7 +226,7 @@ class SocketService {
     print('🚀 Enviado evento "actualizarTextoOriginal" {id: $id, textoOriginal: (...)}');
   }
 
-  void disconnect() {
+    void disconnect() {
     _socket?.dispose();
     _socket = null;
     _isConnecting = false;
