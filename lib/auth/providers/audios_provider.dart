@@ -396,17 +396,18 @@ class AudioProvider with ChangeNotifier {
       debugPrint('📸 Imágenes temporales: ${_imagenesTemporales.length}');
       debugPrint('📊 Metadata: ${_imagenesMetadata.length}');
       debugPrint('🆔 Diagnóstico ID: $diagnosticoId');
-      
+
       for (int i = 0; i < _imagenesTemporales.length; i++) {
         final file = _imagenesTemporales[i];
         final exists = await file.exists();
         final size = exists ? await file.length() : 0;
-        debugPrint('📁 Archivo $i: ${file.path} - Existe: $exists - Tamaño: $size bytes');
+        debugPrint(
+            '📁 Archivo $i: ${file.path} - Existe: $exists - Tamaño: $size bytes');
       }
-      
+
       if (_imagenesTemporales.isNotEmpty) {
         debugPrint('🚀 === INICIANDO SUBIDA DE IMÁGENES ===');
-        
+
         try {
           // Verificar archivos antes de enviar
           final archivosValidos = <File>[];
@@ -418,26 +419,27 @@ class AudioProvider with ChangeNotifier {
               debugPrint('❌ Archivo inválido o vacío: ${file.path}');
             }
           }
-          
+
           if (archivosValidos.isEmpty) {
             debugPrint('⚠️ No hay archivos válidos para subir');
           } else {
-            debugPrint('📤 Subiendo ${archivosValidos.length} archivos válidos...');
-            urlsImagenes = await HttpService.uploadImages(diagnosticoId!, archivosValidos);
+            debugPrint(
+                '📤 Subiendo ${archivosValidos.length} archivos válidos...');
+            urlsImagenes =
+                await HttpService.uploadImages(diagnosticoId!, archivosValidos);
             debugPrint('✅ URLs recibidas: ${urlsImagenes.length}');
-            
+
             for (int i = 0; i < urlsImagenes.length; i++) {
               debugPrint('🔗 URL $i: ${urlsImagenes[i]}');
             }
           }
-          
         } catch (uploadError) {
           debugPrint('❌ === ERROR EN SUBIDA ===');
           debugPrint('Error tipo: ${uploadError.runtimeType}');
           debugPrint('Error mensaje: $uploadError');
           debugPrint('Stack trace: ${StackTrace.current}');
           debugPrint('❌ === FIN ERROR SUBIDA ===');
-          
+
           // Por ahora no fallar, pero sí loguear
           debugPrint('⚠️ Continuando sin imágenes debido al error');
         }
@@ -450,10 +452,11 @@ class AudioProvider with ChangeNotifier {
       debugPrint('📝 Texto: "${_buffer.trim()}"');
       debugPrint('🔗 URLs disponibles: ${urlsImagenes.length}');
       debugPrint('📊 Metadata disponible: ${_imagenesMetadata.length}');
-      
-      final textoOriginalJson = _construirTextoOriginalJson(_buffer.trim(), urlsImagenes);
-      debugPrint('📋 JSON final length: ${textoOriginalJson.length} caracteres');
- 
+
+      final textoOriginalJson =
+          _construirTextoOriginalJson(_buffer.trim(), urlsImagenes);
+      debugPrint(
+          '📋 JSON final length: ${textoOriginalJson.length} caracteres');
 
       socketService.finalizarDiagnostico(
         id: diagnosticoId!,
@@ -477,7 +480,6 @@ class AudioProvider with ChangeNotifier {
     }
   }
 
-  // NUEVO: Construir JSON del texto original
   String _construirTextoOriginalJson(String transcripcion, List<String> urls) {
     final imagenesConMetadata = <Map<String, dynamic>>[];
 
@@ -494,7 +496,6 @@ class AudioProvider with ChangeNotifier {
 
     final now = DateTime.now();
     final fechaFinalizado = '${now.day}/${now.month}/${now.year}';
-   
 
     final jsonData = {
       'transcripcion_completa': transcripcion,
@@ -519,7 +520,7 @@ class AudioProvider with ChangeNotifier {
 
   Future<void> tomarFoto(BuildContext context) async {
     debugPrint('📸 === INICIANDO TOMA DE FOTO ===');
-    
+
     if (_isListening) {
       await _speech.stop(); // Pausar grabación
       _isListening = false;
@@ -528,7 +529,7 @@ class AudioProvider with ChangeNotifier {
     try {
       final picker = ImagePicker();
       debugPrint('📷 Abriendo cámara...');
-      
+
       final pickedFile = await picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
@@ -538,28 +539,29 @@ class AudioProvider with ChangeNotifier {
 
       if (pickedFile != null) {
         debugPrint('📁 Archivo seleccionado: ${pickedFile.path}');
-        
+
         final File imageFile = File(pickedFile.path);
-        
+
         // Verificaciones exhaustivas
         final exists = await imageFile.exists();
         debugPrint('✅ Archivo existe: $exists');
-        
+
         if (exists) {
           final fileSize = await imageFile.length();
           debugPrint('📊 Tamaño del archivo: $fileSize bytes');
-          
+
           if (fileSize > 0) {
             final timestamp = DateTime.now().millisecondsSinceEpoch;
-            
+
             // Agregar marcador al texto (como tenías antes)
             _buffer += ' FOTO ';
             debugPrint('📝 Marcador agregado al buffer: FOTO');
-            
+
             // 🔥 CRÍTICO: Agregar a la lista temporal
             _imagenesTemporales.add(imageFile);
-            debugPrint('📸 Imagen agregada a lista temporal. Total: ${_imagenesTemporales.length}');
-            
+            debugPrint(
+                '📸 Imagen agregada a lista temporal. Total: ${_imagenesTemporales.length}');
+
             // 🔥 CRÍTICO: Crear metadata (esto faltaba en tu código)
             final metadata = {
               'timestamp': timestamp,
@@ -568,11 +570,11 @@ class AudioProvider with ChangeNotifier {
               'path_temporal': imageFile.path,
               'size_bytes': fileSize,
             };
-            
+
             _imagenesMetadata.add(metadata);
             debugPrint('📊 Metadata creada: $metadata');
             debugPrint('📊 Total metadata: ${_imagenesMetadata.length}');
-            
+
             // Verificar que se puede leer el archivo
             try {
               final bytes = await imageFile.readAsBytes();
@@ -580,7 +582,6 @@ class AudioProvider with ChangeNotifier {
             } catch (readError) {
               debugPrint('❌ Error leyendo archivo: $readError');
             }
-            
           } else {
             debugPrint('❌ Archivo vacío (0 bytes)');
           }
@@ -593,10 +594,79 @@ class AudioProvider with ChangeNotifier {
 
       debugPrint('📸 === FIN TOMA DE FOTO ===');
       notifyListeners();
-      
     } catch (e) {
       debugPrint('❌ Error en toma de foto: $e');
       debugPrint('❌ Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  Future<void> procesarImagenCapturada(String imagePath) async {
+    debugPrint('📸 === PROCESANDO IMAGEN CAPTURADA ===');
+
+    if (_isListening) {
+      // Pausar grabación temporalmente
+      await _speech.stop();
+      _isListening = false;
+    }
+
+    try {
+      final File imageFile = File(imagePath);
+
+      // Verificaciones
+      final exists = await imageFile.exists();
+      debugPrint('✅ Archivo existe: $exists');
+
+      if (exists) {
+        final fileSize = await imageFile.length();
+        debugPrint('📊 Tamaño del archivo: $fileSize bytes');
+
+        if (fileSize > 0) {
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+          // Agregar marcador al texto
+          _buffer += ' FOTO ';
+          debugPrint('📝 Marcador agregado al buffer: FOTO');
+
+          // Agregar a la lista temporal
+          _imagenesTemporales.add(imageFile);
+          debugPrint(
+              '📸 Imagen agregada a lista temporal. Total: ${_imagenesTemporales.length}');
+
+          // Crear metadata
+          final metadata = {
+            'timestamp': timestamp,
+            'posicion_en_texto': _buffer.length,
+            'descripcion_contexto': extraerContextoDesdeTexto(),
+            'path_temporal': imageFile.path,
+            'size_bytes': fileSize,
+            'capturada_en_vivo': true, // Marca para distinguir de gallery
+          };
+
+          _imagenesMetadata.add(metadata);
+          debugPrint('📊 Metadata creada: $metadata');
+          debugPrint('📊 Total metadata: ${_imagenesMetadata.length}');
+
+          // Verificar que se puede leer el archivo
+          try {
+            final bytes = await imageFile.readAsBytes();
+            debugPrint('✅ Archivo leíble: ${bytes.length} bytes en memoria');
+          } catch (readError) {
+            debugPrint('❌ Error leyendo archivo: $readError');
+          }
+        } else {
+          debugPrint('❌ Archivo vacío (0 bytes)');
+          throw Exception('Imagen capturada está vacía');
+        }
+      } else {
+        debugPrint('❌ El archivo no existe en la ruta especificada');
+        throw Exception('No se pudo acceder a la imagen capturada');
+      }
+
+      debugPrint('📸 === FIN PROCESAMIENTO IMAGEN ===');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error procesando imagen capturada: $e');
+      rethrow;
     }
   }
 
