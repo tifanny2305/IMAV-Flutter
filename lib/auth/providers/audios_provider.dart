@@ -13,6 +13,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:taller_1/Services/http_service.dart';
 
 typedef OnDetenerCallback = Future<void> Function();
+typedef OnCapturaCallback = Future<void> Function();
 
 class AudioProvider with ChangeNotifier {
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -23,6 +24,7 @@ class AudioProvider with ChangeNotifier {
   PorcupineManager? _porcupineIniciar;
   PorcupineManager? _porcupineContinuar;
   PorcupineManager? _porcupineDetener;
+  PorcupineManager? _porcupineCaptura;
 
   final List<File> _imagenesTemporales = [];
   final List<Map<String, dynamic>> _imagenesMetadata = [];
@@ -55,19 +57,26 @@ class AudioProvider with ChangeNotifier {
   }
 
   OnDetenerCallback? _onDetenerCallback;
+  OnCapturaCallback? _onCapturaCallback;
 
   void setOnDetenerCallback(OnDetenerCallback callback) {
     _onDetenerCallback = callback;
   }
 
+  void setOnCapturaCallback(OnCapturaCallback callback) {
+    _onCapturaCallback = callback;
+  }
+
   Future<void> _initPorcupineMultiples() async {
     // Cada clave trabaja con su propio modelo .ppn
     const String KEY_INICIAR =
-        'HKVb97cL0NGbQUHp6l1M0o7lHvsFDjBhh8YmUaedxZqkW2PcXfNFdQ==';
+        '7mjZ7sKvCfnFrk+y7RnrU7SkI74FCzDHekYSeGBOW3MvWT3E5h+2nA==';
     const String KEY_CONTINUAR =
-        'SXsVFq1/dJGvJnsXqg1l7Twgo8y5Vmif3dRRDmfu/m7k5fVjLR0rig==';
+        'QpLQxTsMqVArGO5AlVPrqDeMS+U2WPt93gat28WiCA9ZB6bkTRpZYw==';
     const String KEY_DETENER =
-        'Og1QbccO6erg/eMNcEB4kLMObukHofBSnT0ywwG5vyNGxyMPF8AUPQ==';
+        'vVFCmBVhEcRCRtAaoXA7EqyJmODgGt+xUrQJ7ywWbgJqNIf6VwKVdw==';
+    const String KEY_CAPTURA =
+        'cxL8O6/D4Qnww5QMyvoaE58JVsUFqYU56rHJeNOVEEBc8a4BuYxXrQ==';
 
     // Comprobamos primero que los assets existen:
     bool existeParams = await rootBundle
@@ -94,7 +103,17 @@ class AudioProvider with ChangeNotifier {
         .catchError((_) => false);
     debugPrint('¿detener_es_android_v3_0_0.ppn existe? → $existeDetener');
 
-    if (!existeParams || !existeIniciar || !existeContinuar || !existeDetener) {
+    bool existeCaptura = await rootBundle
+        .load('assets/keywords/captura_es_android_v3_0_0.ppn')
+        .then((_) => true)
+        .catchError((_) => false);
+    debugPrint('¿captura_es_android_v3_0_0.ppn existe? → $existeCaptura');
+
+    if (!existeParams ||
+        !existeIniciar ||
+        !existeContinuar ||
+        !existeDetener ||
+        !existeCaptura) {
       debugPrint(
           '❌ Faltan assets de Porcupine. No inicializo instancias múltiples.');
       return;
@@ -136,22 +155,39 @@ class AudioProvider with ChangeNotifier {
       await _porcupineContinuar?.start();
       debugPrint('🔊 Porcupine(CONTINUAR) corriendo…');
 
-      // --- Instancia “Detener” ---
+      // --- Instancia FINALIZAR ---
       _porcupineDetener = await PorcupineManager.fromKeywordPaths(
         KEY_DETENER,
         ['assets/keywords/finalizar_es_android_v3_0_0.ppn'],
         (int keywordIndex) {
-          debugPrint('🔑 Porcupine(DETENER) detectó “detener”');
+          debugPrint('🔑 Porcupine(FINALIZAR) detectó “finalizar”');
           _onDetenerDetected();
         },
         modelPath: 'assets/porcupine_params_es.pv',
         sensitivities: [0.5],
         errorCallback: (error) {
-          debugPrint('❌ Porcupine(DETENER) error: $error');
+          debugPrint('❌ Porcupine(FINALIZAR) error: $error');
         },
       );
       await _porcupineDetener?.start();
-      debugPrint('🔊 Porcupine(DETENER) corriendo…');
+      debugPrint('🔊 Porcupine(FINALIZAR) corriendo…');
+
+      // --- Instancia “Captura” ---
+      _porcupineCaptura = await PorcupineManager.fromKeywordPaths(
+        KEY_CAPTURA,
+        ['assets/keywords/captura_es_android_v3_0_0.ppn'],
+        (int keywordIndex) {
+          debugPrint('🔑 Porcupine(CAPTURA) detectó “captura”');
+          _onCapturaDetected();
+        },
+        modelPath: 'assets/porcupine_params_es.pv',
+        sensitivities: [0.5],
+        errorCallback: (error) {
+          debugPrint('❌ Porcupine(CAPTURA) error: $error');
+        },
+      );
+      await _porcupineCaptura?.start();
+      debugPrint('🔊 Porcupine(CAPTURA) corriendo…');
     } catch (e) {
       debugPrint('❌ Error inicializando instancias múltiples: $e');
     }
@@ -176,6 +212,18 @@ class AudioProvider with ChangeNotifier {
       } else {
         stopListening();
       }
+    }
+  }
+
+  void _onCapturaDetected() {
+    if (diagnosticoId != null) {
+      debugPrint('📸 Comando "captura" detectado durante grabación');
+      if (_onCapturaCallback != null) {
+        _onCapturaCallback!();
+      }
+    } else {
+      debugPrint(
+          '⚠️ Comando "captura" ignorado - no está grabando o sin diagnóstico');
     }
   }
 
@@ -458,12 +506,14 @@ class AudioProvider with ChangeNotifier {
       debugPrint(
           '📋 JSON final length: ${textoOriginalJson.length} caracteres');
 
-      socketService.finalizarDiagnostico(
+      /*socketService.finalizarDiagnostico(
         id: diagnosticoId!,
         textoOriginal: textoOriginalJson,
         textoDiagnostico: '',
         textoCliente: '',
-      );
+      );*/
+
+      await finalizarDiagnosticoConIA(textoOriginalJson);
 
       debugPrint('✅ Diagnóstico enviado exitosamente');
 
@@ -480,35 +530,144 @@ class AudioProvider with ChangeNotifier {
     }
   }
 
-  String _construirTextoOriginalJson(String transcripcion, List<String> urls) {
-    final imagenesConMetadata = <Map<String, dynamic>>[];
+  Future<void> finalizarDiagnosticoConIA(String textoOriginalJson) async {
+    final iaResponse = await HttpService().procesarTextoIA(textoOriginalJson);
 
-    // Combinar URLs con metadata existente
+    socketService.finalizarDiagnostico(
+      id: diagnosticoId!,
+      textoOriginal: textoOriginalJson,
+      textoDiagnostico: iaResponse['texto_diagnostico'],
+      textoCliente: iaResponse['texto_cliente'],
+    );
+  }
+
+  String _construirTextoOriginalJson(String transcripcion, List<String> urls) {
+    final Map<String, dynamic> jsonData = {};
+
+    // Si no hay fotos, todo es una sola transcripción
+    if (_imagenesMetadata.isEmpty || urls.isEmpty) {
+      jsonData['transcripcion_primera'] =
+          transcripcion.replaceAll(' FOTO ', '').trim();
+      return jsonEncode(jsonData);
+    }
+
+    // Crear lista de puntos de corte con URLs
+    final List<Map<String, dynamic>> puntosCorte = [];
+
     for (int i = 0; i < _imagenesMetadata.length && i < urls.length; i++) {
-      final metadata = _imagenesMetadata[i];
-      imagenesConMetadata.add({
-        'timestamp': metadata['timestamp'],
-        'url': urls[i], // ← URL real de S3
-        'posicion_en_texto': metadata['posicion_en_texto'],
-        'descripcion_contexto': metadata['descripcion_contexto'],
+      puntosCorte.add({
+        'posicion': _imagenesMetadata[i]['posicion_en_texto'],
+        'timestamp': _imagenesMetadata[i]['timestamp'],
+        'url': urls[i],
+        'descripcion_contexto': _imagenesMetadata[i]['descripcion_contexto'],
       });
     }
 
-    final now = DateTime.now();
-    final fechaFinalizado = '${now.day}/${now.month}/${now.year}';
+    // Ordenar por posición en el texto
+    puntosCorte.sort((a, b) => a['posicion'].compareTo(b['posicion']));
 
-    final jsonData = {
-      'transcripcion_completa': transcripcion,
-      'imagenes': imagenesConMetadata,
-      'metadatos': {
-        'fecha_inicio': DateTime.now().toIso8601String(),
-        'fecha_fin': fechaFinalizado,
-        'mecanico_id': diagnosticoId,
-        'cantidad_imagenes': imagenesConMetadata.length,
+    debugPrint('🔍 === DEBUG SEGMENTACIÓN ===');
+    debugPrint('📝 Transcripción completa: "$transcripcion"');
+    debugPrint('📊 Puntos de corte: ${puntosCorte.length}');
+    for (int i = 0; i < puntosCorte.length; i++) {
+      debugPrint(
+          '   Punto $i: posición ${puntosCorte[i]['posicion']} - URL: ${puntosCorte[i]['url']}');
+    }
+
+    int posicionAnterior = 0;
+    int numeroTranscripcion = 1;
+
+    for (int i = 0; i < puntosCorte.length; i++) {
+      final puntoCorte = puntosCorte[i];
+      final posicionCorte = puntoCorte['posicion'] as int;
+
+      // Extraer texto desde la posición anterior hasta esta foto
+      String textoSegmento = '';
+      if (posicionCorte > posicionAnterior) {
+        // Buscar el inicio del marcador " FOTO " antes de la posición
+        String textoCompleto =
+            transcripcion.substring(posicionAnterior, posicionCorte);
+
+        // Remover el marcador " FOTO " que puede estar al final
+        textoSegmento = textoCompleto.replaceAll(' FOTO ', '').trim();
       }
-    };
 
+      debugPrint('📄 Segmento $numeroTranscripcion: "$textoSegmento"');
+
+      // Solo agregar si hay texto significativo
+      if (textoSegmento.isNotEmpty) {
+        final String keyTranscripcion =
+            _obtenerNombreTranscripcion(numeroTranscripcion);
+        final String keyImagenes = _obtenerNombreImagenes(numeroTranscripcion);
+
+        jsonData[keyTranscripcion] = textoSegmento;
+
+        // Agregar imagen(es) para esta transcripción
+        final List<Map<String, dynamic>> imagenesSegmento = [];
+
+        // Buscar todas las fotos que pertenecen a este segmento
+        // (pueden ser varias si se tomaron consecutivamente)
+        imagenesSegmento.add({
+          'timestamp': puntoCorte['timestamp'],
+          'url': puntoCorte['url'],
+          'descripcion_contexto': puntoCorte['descripcion_contexto'],
+        });
+
+        // Verificar si hay más fotos consecutivas en este segmento
+        int j = i + 1;
+        while (j < puntosCorte.length) {
+          final siguientePunto = puntosCorte[j];
+          final siguientePosicion = siguientePunto['posicion'] as int;
+
+          // Si la siguiente foto está muy cerca (menos de 10 caracteres),
+          // considerarla parte del mismo segmento
+          if (siguientePosicion - posicionCorte < 10) {
+            imagenesSegmento.add({
+              'timestamp': siguientePunto['timestamp'],
+              'url': siguientePunto['url'],
+              'descripcion_contexto': siguientePunto['descripcion_contexto'],
+            });
+            i = j; // Saltar esta foto en la siguiente iteración
+            j++;
+          } else {
+            break;
+          }
+        }
+
+        jsonData[keyImagenes] = imagenesSegmento;
+        numeroTranscripcion++;
+      }
+
+      // Actualizar posición: saltar el marcador " FOTO " (6 caracteres)
+      posicionAnterior = posicionCorte + 6;
+    }
+
+    // Agregar texto restante después de la última foto
+    if (posicionAnterior < transcripcion.length) {
+      final textoFinal = transcripcion
+          .substring(posicionAnterior)
+          .replaceAll(' FOTO ', '')
+          .trim();
+
+      debugPrint('📄 Texto final: "$textoFinal"');
+
+      if (textoFinal.isNotEmpty) {
+        final String keyTranscripcion =
+            _obtenerNombreTranscripcion(numeroTranscripcion);
+        jsonData[keyTranscripcion] = textoFinal;
+      }
+    }
+
+    debugPrint('🎯 JSON final keys: ${jsonData.keys.toList()}');
     return jsonEncode(jsonData);
+  }
+
+  String _obtenerNombreTranscripcion(int numero) {
+    return 'transcripcion_$numero';
+  }
+
+  String _obtenerNombreImagenes(int numero) {
+    return 'imagenes_$numero';
   }
 
   String extraerContextoDesdeTexto() {

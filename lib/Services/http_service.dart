@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HttpService {
-  static const String baseUrl = 'http://192.168.1.4:3000';
+  static const String baseUrl = 'https://imav-motors-back.onrender.com';
 
   static Future<List<String>> uploadImages(
       int diagnosticoId, List<File> imagenes) async {
@@ -35,7 +35,7 @@ class HttpService {
       print('🔍 2. Verificando diagnóstico específico...');
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken') ?? '';
-      
+
       try {
         final diagTest = await http.get(
           Uri.parse('$baseUrl/api/diagnosticos/$diagnosticoId'),
@@ -72,7 +72,7 @@ class HttpService {
       // 4. Crear la petición multipart
       print('🔍 4. Creando petición multipart...');
       final request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
-      
+
       // Headers
       request.headers['Authorization'] = 'Bearer $token';
       print('🔑 Token agregado: ${token.length} caracteres');
@@ -82,15 +82,16 @@ class HttpService {
       for (int i = 0; i < imagenes.length; i++) {
         final file = imagenes[i];
         final size = await file.length();
-        
+
         print('📁 Archivo $i: ${file.path} (${size} bytes)');
-        
+
         final multipartFile = await http.MultipartFile.fromPath(
           'images', // Campo 'images' como espera el backend
           file.path,
-          filename: 'imagen_${i + 1}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          filename:
+              'imagen_${i + 1}_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
-        
+
         request.files.add(multipartFile);
       }
 
@@ -103,7 +104,7 @@ class HttpService {
       // 5. Enviar petición
       print('🚀 5. Enviando petición POST...');
       final response = await request.send();
-      
+
       print('📡 === RESPUESTA RECIBIDA ===');
       print('🔢 Status: ${response.statusCode}');
       print('📋 Headers: ${response.headers}');
@@ -121,13 +122,28 @@ class HttpService {
         print('❌ Error HTTP ${response.statusCode}');
         throw Exception('Error HTTP ${response.statusCode}: $responseBody');
       }
-
     } catch (e, stackTrace) {
       print('❌ === ERROR COMPLETO ===');
       print('Tipo: ${e.runtimeType}');
       print('Mensaje: $e');
       print('Stack: $stackTrace');
       rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> procesarTextoIA(String textoOriginalJson) async {
+    final url = Uri.parse('https://ia-taller-pln.fly.dev/procesar-json');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'texto_original': textoOriginalJson}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error en IA: ${response.body}');
     }
   }
 }

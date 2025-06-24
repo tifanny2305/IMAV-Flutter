@@ -8,7 +8,7 @@ class SocketService {
   SocketService._internal();
 
   IO.Socket? _socket;
-  final String _serverUrl = 'http://192.168.1.4:3000';
+  final String _serverUrl = 'https://imav-motors-back.onrender.com';
   bool _isConnecting = false;
 
   IO.Socket get socket {
