@@ -70,11 +70,11 @@ class AudioProvider with ChangeNotifier {
   Future<void> _initPorcupineMultiples() async {
     // Cada clave trabaja con su propio modelo .ppn
     const String KEY_INICIAR =
-        'HKVb97cL0NGbQUHp6l1M0o7lHvsFDjBhh8YmUaedxZqkW2PcXfNFdQ==';
+        '7mjZ7sKvCfnFrk+y7RnrU7SkI74FCzDHekYSeGBOW3MvWT3E5h+2nA==';
     const String KEY_CONTINUAR =
-        'SXsVFq1/dJGvJnsXqg1l7Twgo8y5Vmif3dRRDmfu/m7k5fVjLR0rig==';
+        'QpLQxTsMqVArGO5AlVPrqDeMS+U2WPt93gat28WiCA9ZB6bkTRpZYw==';
     const String KEY_DETENER =
-        'Og1QbccO6erg/eMNcEB4kLMObukHofBSnT0ywwG5vyNGxyMPF8AUPQ==';
+        'vVFCmBVhEcRCRtAaoXA7EqyJmODgGt+xUrQJ7ywWbgJqNIf6VwKVdw==';
     const String KEY_CAPTURA =
         'cxL8O6/D4Qnww5QMyvoaE58JVsUFqYU56rHJeNOVEEBc8a4BuYxXrQ==';
 

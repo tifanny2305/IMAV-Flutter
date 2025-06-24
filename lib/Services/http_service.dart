@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HttpService {
-  static const String baseUrl = 'http://192.168.1.5:3000';
+  static const String baseUrl = 'https://imav-motors-back.onrender.com';
 
   static Future<List<String>> uploadImages(
       int diagnosticoId, List<File> imagenes) async {
@@ -132,7 +132,7 @@ class HttpService {
   }
 
   Future<Map<String, dynamic>> procesarTextoIA(String textoOriginalJson) async {
-    final url = Uri.parse('http://192.168.1.5:8000/procesar-json');
+    final url = Uri.parse('https://ia-taller-pln.fly.dev/procesar-json');
 
     final response = await http.post(
       url,
