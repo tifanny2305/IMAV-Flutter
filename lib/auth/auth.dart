@@ -10,7 +10,7 @@ class UsuarioProvider with ChangeNotifier {
   bool _isAuthenticated = false;
 
   //final String _baseUrl = 'http://10.0.2.2:3000/api/auth';
-  final String _baseUrl = 'http://192.168.1.4:3000/api/auth';
+  final String _baseUrl = 'http://192.168.1.5:3000/api/auth';
 
   // Getters
   String? get correo => _correo;

@@ -43,6 +43,9 @@ class _AudiosState extends State<Audios> with WidgetsBindingObserver {
           );
         }
       });
+      audioProv.setOnCapturaCallback(() async {
+        await _capturarFotoDesdeCamera(); // ← El método correcto que ya tienes
+      });
     });
   }
 
